@@ -4,9 +4,23 @@ from aioconsole import ainput
 clients = []
 
 
+async def timeout(command):
+    time = command.split("|")[-1]
+    for x in range(1,10):
+        await asyncio.sleep(int(time) / 10)
+        print(f"{x}0%")
+
+
 class EchoServerProtocol(asyncio.Protocol):
     def __init__(self):
         super().__init__()
+
+    def data_received(self,data):
+        num = int.from_bytes(data,"little")
+        if num < 10:
+            print(f"{self.peername} - OP[{num}]")
+        else:
+            print(f"{self.peername} - SENT [{num}]")
 
     def connection_made(self, transport):
         self.transport = transport
@@ -30,8 +44,9 @@ async def main():
             input = await ainput("")
             if len(clients) > 0:
                 print(f"Sending to {len(clients)}")
+                loop.create_task(timeout(input))
                 for client in clients:
                     client.write(bytes(input,encoding="utf-8"))
 
-
+print("GO")
 asyncio.run(main())
